@@ -51,7 +51,6 @@ A lightweight, real-time chat application built with Python WebSockets, featurin
 1. **Clone the repository**
 ```bash
 git clone https://github.com/AsGuizar/chatlogger.git
-cd websocket-chat
 ```
 
 2. **Install dependencies**
