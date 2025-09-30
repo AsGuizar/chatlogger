@@ -254,7 +254,7 @@
             
             <div class="input-group">
                 <label for="servidorInput">IP del Servidor</label>
-                <input type="text" id="servidorInput" placeholder="Ej: 192.168.1.100" value="https://chatlogger-1.onrender.com">
+                <input type="text" id="servidorInput" placeholder="Ej: 192.168.1.100" value="localhost">
             </div>
             
             <button class="btn" id="conectarBtn">Conectar</button>
@@ -326,7 +326,12 @@
             conectarBtn.textContent = 'Conectando...';
             
             try {
-                ws = new WebSocket(`ws://${servidor}:8765`);
+                // Detect if using Render/cloud (wss) or localhost (ws)
+                const isLocalhost = servidor === 'localhost' || servidor.startsWith('192.168.') || servidor.startsWith('127.0.0.1');
+                const protocol = isLocalhost ? 'ws://' : 'wss://';
+                const port = isLocalhost ? ':8765' : '';
+                
+                ws = new WebSocket(`${protocol}${servidor}${port}`);
                 
                 ws.onopen = () => {
                     console.log('Conectado al servidor');
