@@ -3,6 +3,10 @@ import websockets
 import json
 from datetime import datetime
 from collections import defaultdict
+import os
+
+PORT = int(os.environ.get("PORT", 8765))
+
 
 # Storage for connected nodes
 nodos = {}  # {websocket: {"nombre": str, "conectado_en": datetime}}
@@ -125,11 +129,9 @@ async def main():
     async with websockets.serve(
         manejar_conexion,
         "0.0.0.0",
-        8765
+        PORT
     ):
-        print("🚀 Servidor WebSocket iniciado en ws://0.0.0.0:8765")
-        print("📊 Para ver el dashboard, abre dashboard.html en tu navegador")
-        print("   (El dashboard se conectará automáticamente al servidor)")
+        print("🚀 Servidor WebSocket iniciado en puerto {PORT}")
         await asyncio.Future()  # Mantener corriendo indefinidamente
 
 if __name__ == "__main__":
