@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Server Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .nodos-list {
+            list-style: none;
+        }
+        
+        .nodo-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .nodo-item strong {
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        .nodo-item small {
+            display: block;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .log-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .log-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+        
+        .log-entry {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            animation: fadeIn 0.5s ease;
+            border-left: 4px solid;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .log-conexion {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .log-desconexion {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .log-mensaje {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .log-nodo {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .log-time {
+            color: #666;
+            font-size: 0.85em;
+        }
+        
+        .log-content {
+            margin-top: 8px;
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online {
+            background: #28a745;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Chat Server Dashboard</h1>
+            <p>Monitor en tiempo real de conexiones y mensajes</p>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <h3 id="stat-nodos">0</h3>
+                    <p>Nodos Conectados</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="stat-mensajes">0</h3>
+                    <p>Mensajes Totales</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="stat-conexiones">0</h3>
+                    <p>Conexiones Totales</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>👥 Nodos Activos</h2>
+                <ul class="nodos-list" id="nodos-list">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                        </svg>
+                        <p>No hay nodos conectados</p>
+                    </div>
+                </ul>
+            </div>
+            
+            <div class="panel">
+                <h2>📜 Registro de Actividad</h2>
+                <div class="log-container" id="log-container">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                        </svg>
+                        <p>Esperando actividad...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        const nodosActivos = new Map();
+        let totalConexiones = 0;
+        let totalMensajes = 0;
+        
+        function conectarWebSocket() {
+            ws = new WebSocket('ws://localhost:8765');
+            
+            ws.onopen = () => {
+                console.log('Dashboard conectado al servidor');
+                // Autenticar como dashboard (observador)
+                ws.send(JSON.stringify({
+                    accion: 'auth',
+                    nombre: '📊 Dashboard'
+                }));
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                procesarEvento(data);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('Error de conexión:', error);
+            };
+            
+            ws.onclose = () => {
+                console.log('Desconectado del servidor, reintentando...');
+                setTimeout(conectarWebSocket, 3000);
+            };
+        }
+        
+        conectarWebSocket();
+        
+        function procesarEvento(data) {
+            switch(data.tipo) {
+                case 'nodo_conectado':
+                    totalConexiones++;
+                    actualizarEstadisticas();
+                    break;
+                case 'nodo_desconectado':
+                    actualizarEstadisticas();
+                    break;
+                case 'mensaje':
+                    totalMensajes++;
+                    mostrarLogEntry({
+                        tipo: 'mensaje',
+                        nodo: data.remitente,
+                        contenido: data.contenido,
+                        timestamp: data.timestamp
+                    });
+                    actualizarEstadisticas();
+                    break;
+            }
+        }
+        
+        function mostrarLogEntry(log, animate = true) {
+            const container = document.getElementById('log-container');
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${log.tipo}`;
+            if (!animate) entry.style.animation = 'none';
+            
+            let icono = '';
+            let titulo = '';
+            switch(log.tipo) {
+                case 'conexion':
+                    icono = '🟢';
+                    titulo = 'Nodo Conectado';
+                    nodosActivos.set(log.nodo, log);
+                    break;
+                case 'desconexion':
+                    icono = '🔴';
+                    titulo = 'Nodo Desconectado';
+                    nodosActivos.delete(log.nodo);
+                    break;
+                case 'mensaje':
+                    icono = '💬';
+                    titulo = 'Mensaje';
+                    break;
+            }
+            
+            const time = new Date(log.timestamp).toLocaleTimeString('es-MX');
+            
+            entry.innerHTML = `
+                <div class="log-header">
+                    <span class="log-nodo">${icono} ${titulo}: ${log.nodo}</span>
+                    <span class="log-time">${time}</span>
+                </div>
+                ${log.contenido ? `<div class="log-content">${JSON.stringify(log.contenido, null, 2)}</div>` : ''}
+            `;
+            
+            container.insertBefore(entry, container.firstChild);
+            actualizarNodosActivos();
+        }
+        
+        function actualizarNodosActivos() {
+            const lista = document.getElementById('nodos-list');
+            const emptyState = lista.querySelector('.empty-state');
+            
+            if (nodosActivos.size === 0) {
+                if (!emptyState) {
+                    lista.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                            </svg>
+                            <p>No hay nodos conectados</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            if (emptyState) emptyState.remove();
+            
+            lista.innerHTML = '';
+            nodosActivos.forEach((info, nombre) => {
+                const item = document.createElement('li');
+                item.className = 'nodo-item';
+                const conectadoEn = new Date(info.conectado_en || info.timestamp).toLocaleTimeString('es-MX');
+                item.innerHTML = `
+                    <span class="status-indicator status-online"></span>
+                    <strong>${nombre}</strong>
+                    <small>Conectado: ${conectadoEn}</small>
+                    ${info.address ? `<small>IP: ${info.address}</small>` : ''}
+                `;
+                lista.appendChild(item);
+            });
+        }
+        
+        function actualizarEstadisticas() {
+            document.getElementById('stat-nodos').textContent = nodosActivos.size;
+            document.getElementById('stat-mensajes').textContent = totalMensajes;
+            document.getElementById('stat-conexiones').textContent = totalConexiones;
+        }
+    </script>
+</body>
+</html>

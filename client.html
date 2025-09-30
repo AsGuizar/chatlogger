@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Node - Cliente Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .login-screen, .chat-screen {
+            padding: 40px;
+        }
+        
+        .login-screen h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .login-screen p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .chat-screen {
+            display: none;
+            height: 600px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h2 {
+            font-size: 1.3em;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.system {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        
+        .message.other .message-content {
+            background: white;
+            border-left: 4px solid #667eea;
+        }
+        
+        .message.own .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .message-text {
+            word-wrap: break-word;
+        }
+        
+        .message-time {
+            font-size: 0.75em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+        
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .send-btn {
+            width: auto;
+            padding: 12px 30px;
+            border-radius: 25px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Pantalla de Login -->
+        <div class="login-screen" id="loginScreen">
+            <h1>💬 Chat Node</h1>
+            <p>Conéctate al servidor de chat</p>
+            
+            <div id="errorContainer"></div>
+            
+            <div class="input-group">
+                <label for="nombreInput">Tu Nombre</label>
+                <input type="text" id="nombreInput" placeholder="Ej: Juan" autofocus>
+            </div>
+            
+            <div class="input-group">
+                <label for="servidorInput">IP del Servidor</label>
+                <input type="text" id="servidorInput" placeholder="Ej: 192.168.1.100" value="localhost">
+            </div>
+            
+            <button class="btn" id="conectarBtn">Conectar</button>
+        </div>
+        
+        <!-- Pantalla de Chat -->
+        <div class="chat-screen" id="chatScreen">
+            <div class="chat-header">
+                <h2 id="nombreUsuario">Chat</h2>
+                <div class="status">
+                    <div class="status-dot"></div>
+                    <span id="nodosConectados">0 nodos</span>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer"></div>
+            
+            <div class="input-area">
+                <input type="text" id="mensajeInput" placeholder="Escribe un mensaje...">
+                <button class="btn send-btn" id="enviarBtn">Enviar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let miNombre = '';
+        
+        const loginScreen = document.getElementById('loginScreen');
+        const chatScreen = document.getElementById('chatScreen');
+        const errorContainer = document.getElementById('errorContainer');
+        const nombreInput = document.getElementById('nombreInput');
+        const servidorInput = document.getElementById('servidorInput');
+        const conectarBtn = document.getElementById('conectarBtn');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const mensajeInput = document.getElementById('mensajeInput');
+        const enviarBtn = document.getElementById('enviarBtn');
+        const nombreUsuario = document.getElementById('nombreUsuario');
+        const nodosConectados = document.getElementById('nodosConectados');
+        
+        // Event Listeners
+        conectarBtn.addEventListener('click', conectar);
+        enviarBtn.addEventListener('click', enviarMensaje);
+        mensajeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarMensaje();
+        });
+        nombreInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') conectar();
+        });
+        
+        function mostrarError(mensaje) {
+            errorContainer.innerHTML = `<div class="error">${mensaje}</div>`;
+            setTimeout(() => {
+                errorContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        async function conectar() {
+            const nombre = nombreInput.value.trim();
+            const servidor = servidorInput.value.trim() || 'localhost';
+            
+            if (!nombre) {
+                mostrarError('Por favor ingresa tu nombre');
+                return;
+            }
+            
+            miNombre = nombre;
+            conectarBtn.disabled = true;
+            conectarBtn.textContent = 'Conectando...';
+            
+            try {
+                ws = new WebSocket(`ws://${servidor}:8765`);
+                
+                ws.onopen = () => {
+                    console.log('Conectado al servidor');
+                    // Enviar autenticación
+                    ws.send(JSON.stringify({
+                        accion: 'auth',
+                        nombre: miNombre
+                    }));
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    manejarMensaje(data);
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('Error de WebSocket:', error);
+                    mostrarError('Error de conexión. Verifica la IP del servidor.');
+                    conectarBtn.disabled = false;
+                    conectarBtn.textContent = 'Conectar';
+                };
+                
+                ws.onclose = () => {
+                    console.log('Desconectado del servidor');
+                    agregarMensajeSistema('Desconectado del servidor');
+                };
+                
+            } catch (error) {
+                mostrarError('No se pudo conectar al servidor');
+                conectarBtn.disabled = false;
+                conectarBtn.textContent = 'Conectar';
+            }
+        }
+        
+        function manejarMensaje(data) {
+            switch(data.tipo) {
+                case 'auth_ok':
+                    // Autenticación exitosa
+                    loginScreen.style.display = 'none';
+                    chatScreen.style.display = 'flex';
+                    nombreUsuario.textContent = miNombre;
+                    nodosConectados.textContent = `${data.total_nodos} nodo${data.total_nodos !== 1 ? 's' : ''}`;
+                    agregarMensajeSistema(`Conectado como ${miNombre}`);
+                    mensajeInput.focus();
+                    break;
+                    
+                case 'nodo_conectado':
+                    nodosConectados.textContent = `${data.total_nodos} nodo${data.total_nodos !== 1 ? 's' : ''}`;
+                    agregarMensajeSistema(`🟢 ${data.nodo} se conectó`);
+                    break;
+                    
+                case 'nodo_desconectado':
+                    nodosConectados.textContent = `${data.total_nodos} nodo${data.total_nodos !== 1 ? 's' : ''}`;
+                    agregarMensajeSistema(`🔴 ${data.nodo} se desconectó`);
+                    break;
+                    
+                case 'mensaje':
+                    agregarMensaje(data.remitente, data.contenido.texto, false);
+                    break;
+            }
+        }
+        
+        function enviarMensaje() {
+            const texto = mensajeInput.value.trim();
+            
+            if (!texto || !ws || ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+            
+            const mensaje = {
+                texto: texto,
+                timestamp: new Date().toISOString()
+            };
+            
+            ws.send(JSON.stringify(mensaje));
+            agregarMensaje(miNombre, texto, true);
+            mensajeInput.value = '';
+        }
+        
+        function agregarMensajeSistema(texto) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system';
+            messageDiv.textContent = texto;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function agregarMensaje(remitente, texto, esPropio) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${esPropio ? 'own' : 'other'}`;
+            
+            const time = new Date().toLocaleTimeString('es-MX', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${!esPropio ? `<div class="message-sender">${remitente}</div>` : ''}
+                    <div class="message-text">${escapeHtml(texto)}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
