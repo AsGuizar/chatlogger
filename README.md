@@ -28,7 +28,7 @@ A lightweight, real-time chat application built with Python WebSockets, featurin
 
 **Live Example:**
 - Server: `wss://chatlogger-1.onrender.com`
-- Users connect via browser, no downloads needed!
+- Users connect via browser (with live server, per example)
 
 ## 📋 Table of Contents
 
